@@ -52,10 +52,13 @@ def print_table(t, subset_stats, current_index, total_indices):
     header = f"{'Subset (n/t)':<15} {'Packs':<15} {'Size (MB)':<15}"
     print(header)
     print("-" * len(header))
+    t_str = str(t)
+    t_width = len(t_str)
     for n in range(1, t + 1):
         packs = subset_stats[n]["packs"]
         size_mb = subset_stats[n]["size_bytes"] / 1_000_000
-        n_t = f"{n}/{t}"
+        n_str = str(n).rjust(t_width)
+        n_t = f"{n_str}/{t_str}"
         print(f"{n_t:<15} {packs:<15} {size_mb:<15.2f}")
 
 

@@ -138,6 +138,24 @@ def test_main_complex_index_and_duplicate_packs(mocker, capsys):
     assert "1/1             2               1.00" in captured.out
 
 
+def test_main_alignment(mocker, capsys):
+    # Mock index list for t=10 to test alignment
+    mocker.patch(
+        "restic_subset_calculator.run_restic",
+        side_effect=[
+            "idx1",
+            json.dumps(
+                {"packs": [{"id": "00", "blobs": [{"offset": 0, "length": 0}]}]}
+            ),
+        ],
+    )
+    mocker.patch("sys.argv", ["restic_subset_calculator.py", "10"])
+    restic_subset_calculator.main()
+    captured = capsys.readouterr()
+    # n=1 for t=10 should be " 1/10"
+    assert " 1/10           1               0.00" in captured.out
+
+
 def test_main_debug_flag(mocker, capsys):
     index_ids = ["idx"]
     mocker.patch(
