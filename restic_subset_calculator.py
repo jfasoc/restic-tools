@@ -20,6 +20,33 @@ def run_restic(args, debug=False):
         sys.exit(1)
 
 
+def parse_json_output(output):
+    """
+    Parse restic JSON output which might be:
+    - A single JSON object/array
+    - Multiple JSON objects (NDJSON)
+    - A list of JSON-encoded strings (one per line)
+    """
+    output = output.strip()
+    if not output:
+        return []
+
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError:
+        results = []
+        for line in output.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                results.append(json.loads(line))
+            except json.JSONDecodeError:
+                # Fallback for non-JSON lines (raw IDs)
+                results.append(line)
+        return results
+
+
 def print_table(t, subset_stats, current_index, total_indices):
     print(f"\nIndex {current_index}/{total_indices}")
     header = f"{'Subset (n/t)':<15} {'Packs':<15} {'Size (MB)':<15}"
@@ -47,16 +74,16 @@ def main():
         sys.exit(1)
 
     # Get index IDs
-    index_list_json = run_restic(["list", "index", "--json"], debug=args.debug)
-    index_ids = json.loads(index_list_json)
+    index_list_raw = run_restic(["list", "index", "--json"], debug=args.debug)
+    index_ids = parse_json_output(index_list_raw)
     total_indices = len(index_ids)
 
     seen_packs = {}  # pack_id -> size
     subset_stats = {n: {"packs": 0, "size_bytes": 0} for n in range(1, args.t + 1)}
 
     for i, index_id in enumerate(index_ids, 1):
-        index_content_json = run_restic(["cat", "index", index_id], debug=args.debug)
-        index_data = json.loads(index_content_json)
+        index_content_raw = run_restic(["cat", "index", index_id], debug=args.debug)
+        index_data = parse_json_output(index_content_raw)
 
         # restic cat index returns a list of objects, one of which has "packs"
         # actually, usually it's a single object with "packs"

@@ -53,12 +53,12 @@ def test_main_invalid_t(mocker):
 
 
 def test_main_success(mocker, capsys):
-    # Mock index list
-    index_ids = ["index1", "index2"]
+    # Mock index list using NDJSON-like format (multiple lines of IDs)
+    index_output = "index1\nindex2"
     mocker.patch(
         "restic_subset_calculator.run_restic",
         side_effect=[
-            json.dumps(index_ids),  # for list index
+            index_output,  # for list index
             json.dumps(
                 {  # for index1
                     "packs": [
@@ -165,10 +165,24 @@ def test_entry_point(mocker):
     # execution if it hits the main()
     mock_run = mocker.patch("subprocess.run")
     mock_run.side_effect = [
-        MagicMock(stdout=json.dumps(["idx"]), returncode=0),
+        MagicMock(stdout="idx", returncode=0),
         MagicMock(stdout=json.dumps({"packs": []}), returncode=0),
     ]
 
     # We don't patch main() here because we want to see it executed and covered.
     # Instead we verify that the module execution doesn't fail.
     runpy.run_path("restic_subset_calculator.py", run_name="__main__")
+
+
+def test_parse_json_output_empty():
+    assert restic_subset_calculator.parse_json_output("") == []
+
+
+def test_parse_json_output_ndjson():
+    ndjson = '{"a":1}\n{"b":2}'
+    assert restic_subset_calculator.parse_json_output(ndjson) == [{"a": 1}, {"b": 2}]
+
+
+def test_parse_json_output_mixed_with_empty_lines():
+    ndjson = '{"a":1}\n\n  \n{"b":2}'
+    assert restic_subset_calculator.parse_json_output(ndjson) == [{"a": 1}, {"b": 2}]
