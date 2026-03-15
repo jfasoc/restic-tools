@@ -3,7 +3,7 @@ name = "restic-subset-calculator"
 version = "0.1.0"
 description = "A tool to calculate restic check data subset statistics"
 authors = [
-    {name = "Jules", email = "jules@example.com"},
+    {name = "jfasoc", email = "7720125+jfasoc@users.noreply.github.com"},
 ]
 dependencies = []
 requires-python = ">=3.12"
