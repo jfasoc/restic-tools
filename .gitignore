@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+.pdm-build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/

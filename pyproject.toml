@@ -1,0 +1,43 @@
+[project]
+name = "restic-subset-calculator"
+version = "0.1.0"
+description = "A tool to calculate restic check data subset statistics"
+authors = [
+    {name = "Jules", email = "jules@example.com"},
+]
+dependencies = []
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.scripts]
+restic-subset-calculator = "restic_subset_calculator:main"
+
+[tool.pdm]
+distribution = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.6",
+]
