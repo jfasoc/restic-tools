@@ -61,7 +61,7 @@ def print_table(t, subset_stats, current_index, total_indices):
         size_mb = subset_stats[n]["size_bytes"] / 1_000_000
         n_str = str(n).rjust(t_width)
         n_t = f"{n_str}/{t_str}"
-        print(f"{n_t:<15} {packs:<15} {size_mb:>15.2f}")
+        print(f"{n_t:<15} {packs:>15} {size_mb:>15.2f}")
 
 
 def main():

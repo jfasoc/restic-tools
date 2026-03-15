@@ -96,9 +96,9 @@ def test_main_success(mocker, capsys):
 
     captured = capsys.readouterr()
     assert "Index 1/2" in captured.out
-    assert "1/2             1                          1.00" in captured.out
+    assert "1/2                           1            1.00" in captured.out
     assert "Index 2/2" in captured.out
-    assert "2/2             1                          2.00" in captured.out
+    assert "2/2                           1            2.00" in captured.out
 
 
 def test_main_complex_index_and_duplicate_packs(mocker, capsys):
@@ -144,7 +144,7 @@ def test_main_complex_index_and_duplicate_packs(mocker, capsys):
     captured = capsys.readouterr()
     # 2 unique packs. ff... has size 1000000. 00... has size 1000.
     # Total size = 1001000 bytes = 1.00 MB (decimal)
-    assert "1/1             2                          1.00" in captured.out
+    assert "1/1                           2            1.00" in captured.out
 
 
 def test_main_alignment(mocker, capsys):
@@ -165,7 +165,7 @@ def test_main_alignment(mocker, capsys):
     restic_subset_calculator.main()
     captured = capsys.readouterr()
     # n=1 for t=10 should be " 1/10"
-    assert " 1/10           1                          0.00" in captured.out
+    assert " 1/10                         1            0.00" in captured.out
 
 
 def test_main_debug_flag(mocker, capsys):
