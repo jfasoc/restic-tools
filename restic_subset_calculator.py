@@ -11,10 +11,12 @@ def run_restic(args, debug=False):
     if debug:
         print(f"Executing: {' '.join(cmd)}", file=sys.stderr)
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, check=True, env=os.environ
-        )
-        return result.stdout
+        # Use bytes to get accurate download size
+        result = subprocess.run(cmd, capture_output=True, check=True, env=os.environ)
+        if debug:
+            size_mb = len(result.stdout) / 1_000_000
+            print(f"Downloaded: {size_mb:.2f} MB", file=sys.stderr)
+        return result.stdout, len(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error executing restic: {e.stderr}", file=sys.stderr)
         sys.exit(1)
@@ -77,16 +79,21 @@ def main():
         sys.exit(1)
 
     # Get index IDs
-    index_list_raw = run_restic(["list", "index", "--json"], debug=args.debug)
-    index_ids = parse_json_output(index_list_raw)
+    total_downloaded = 0
+    index_list_raw, dl_size = run_restic(["list", "index", "--json"], debug=args.debug)
+    total_downloaded += dl_size
+    index_ids = parse_json_output(index_list_raw.decode())
     total_indices = len(index_ids)
 
     seen_packs = {}  # pack_id -> size
     subset_stats = {n: {"packs": 0, "size_bytes": 0} for n in range(1, args.t + 1)}
 
     for i, index_id in enumerate(index_ids, 1):
-        index_content_raw = run_restic(["cat", "index", index_id], debug=args.debug)
-        index_data = parse_json_output(index_content_raw)
+        index_content_raw, dl_size = run_restic(
+            ["cat", "index", index_id], debug=args.debug
+        )
+        total_downloaded += dl_size
+        index_data = parse_json_output(index_content_raw.decode())
 
         # restic cat index returns a list of objects, one of which has "packs"
         # actually, usually it's a single object with "packs"
@@ -118,6 +125,11 @@ def main():
                 subset_stats[subset_n]["size_bytes"] += max_end
 
         print_table(args.t, subset_stats, i, total_indices)
+        if args.debug:
+            print(
+                f"Total downloaded so far: {total_downloaded / 1_000_000:.2f} MB",
+                file=sys.stderr,
+            )
 
 
 if __name__ == "__main__":

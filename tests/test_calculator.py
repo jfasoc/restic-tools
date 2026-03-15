@@ -10,22 +10,24 @@ import restic_subset_calculator
 
 def test_run_restic_success(mocker):
     mock_run = mocker.patch("subprocess.run")
-    mock_run.return_value = MagicMock(stdout="output", returncode=0)
+    mock_run.return_value = MagicMock(stdout=b"output", returncode=0)
 
-    result = restic_subset_calculator.run_restic(["list", "index"])
+    result, size = restic_subset_calculator.run_restic(["list", "index"])
 
-    assert result == "output"
+    assert result == b"output"
+    assert size == len(b"output")
     mock_run.assert_called_once()
 
 
 def test_run_restic_debug(mocker, capsys):
     mock_run = mocker.patch("subprocess.run")
-    mock_run.return_value = MagicMock(stdout="output", returncode=0)
+    mock_run.return_value = MagicMock(stdout=b"output", returncode=0)
 
     restic_subset_calculator.run_restic(["list", "index"], debug=True)
 
     captured = capsys.readouterr()
     assert "Executing: restic list index" in captured.err
+    assert "Downloaded: 0.00 MB" in captured.err
 
 
 def test_run_restic_failure(mocker):
@@ -54,30 +56,36 @@ def test_main_invalid_t(mocker):
 
 def test_main_success(mocker, capsys):
     # Mock index list using NDJSON-like format (multiple lines of IDs)
-    index_output = "index1\nindex2"
+    index_output = b"index1\nindex2"
     mocker.patch(
         "restic_subset_calculator.run_restic",
         side_effect=[
-            index_output,  # for list index
-            json.dumps(
-                {  # for index1
-                    "packs": [
-                        {
-                            "id": "00aabb",  # byte 00 -> 0 % 2 = 0 -> subset 1
-                            "blobs": [{"offset": 0, "length": 1000000}],
-                        }
-                    ]
-                }
+            (index_output, len(index_output)),  # for list index
+            (
+                json.dumps(
+                    {  # for index1
+                        "packs": [
+                            {
+                                "id": "00aabb",  # byte 00 -> 0 % 2 = 0 -> subset 1
+                                "blobs": [{"offset": 0, "length": 1000000}],
+                            }
+                        ]
+                    }
+                ).encode(),
+                100,
             ),
-            json.dumps(
-                {  # for index2
-                    "packs": [
-                        {
-                            "id": "01ccdd",  # byte 01 -> 1 % 2 = 1 -> subset 2
-                            "blobs": [{"offset": 0, "length": 2000000}],
-                        }
-                    ]
-                }
+            (
+                json.dumps(
+                    {  # for index2
+                        "packs": [
+                            {
+                                "id": "01ccdd",  # byte 01 -> 1 % 2 = 1 -> subset 2
+                                "blobs": [{"offset": 0, "length": 2000000}],
+                            }
+                        ]
+                    }
+                ).encode(),
+                100,
             ),
         ],
     )
@@ -94,8 +102,6 @@ def test_main_success(mocker, capsys):
 
 
 def test_main_complex_index_and_duplicate_packs(mocker, capsys):
-    # Mock index list
-    index_ids = ["index1"]
     # Restic index can be a list of dicts
     index1_content = [
         {
@@ -125,7 +131,10 @@ def test_main_complex_index_and_duplicate_packs(mocker, capsys):
 
     mocker.patch(
         "restic_subset_calculator.run_restic",
-        side_effect=[json.dumps(index_ids), json.dumps(index1_content)],
+        side_effect=[
+            (json.dumps(["index1"]).encode(), 10),
+            (json.dumps(index1_content).encode(), 100),
+        ],
     )
 
     mocker.patch("sys.argv", ["restic_subset_calculator.py", "1"])
@@ -143,9 +152,12 @@ def test_main_alignment(mocker, capsys):
     mocker.patch(
         "restic_subset_calculator.run_restic",
         side_effect=[
-            "idx1",
-            json.dumps(
-                {"packs": [{"id": "00", "blobs": [{"offset": 0, "length": 0}]}]}
+            (b"idx1", 4),
+            (
+                json.dumps(
+                    {"packs": [{"id": "00", "blobs": [{"offset": 0, "length": 0}]}]}
+                ).encode(),
+                10,
             ),
         ],
     )
@@ -157,10 +169,12 @@ def test_main_alignment(mocker, capsys):
 
 
 def test_main_debug_flag(mocker, capsys):
-    index_ids = ["idx"]
     mocker.patch(
         "restic_subset_calculator.run_restic",
-        side_effect=[json.dumps(index_ids), json.dumps({"packs": []})],
+        side_effect=[
+            (json.dumps(["idx"]).encode(), 10),
+            (json.dumps({"packs": []}).encode(), 10),
+        ],
     )
     mocker.patch("sys.argv", ["restic_subset_calculator.py", "1", "--debug"])
 
@@ -175,6 +189,9 @@ def test_main_debug_flag(mocker, capsys):
         assert mock_run.call_args_list[0][1]["debug"] is True
         assert mock_run.call_args_list[1][1]["debug"] is True
 
+    captured = capsys.readouterr()
+    assert "Total downloaded so far: 0.00 MB" in captured.err
+
 
 def test_entry_point(mocker):
     mocker.patch("sys.argv", ["restic_subset_calculator.py", "1"])
@@ -183,8 +200,8 @@ def test_entry_point(mocker):
     # execution if it hits the main()
     mock_run = mocker.patch("subprocess.run")
     mock_run.side_effect = [
-        MagicMock(stdout="idx", returncode=0),
-        MagicMock(stdout=json.dumps({"packs": []}), returncode=0),
+        MagicMock(stdout=b"idx", returncode=0),
+        MagicMock(stdout=json.dumps({"packs": []}).encode(), returncode=0),
     ]
 
     # We don't patch main() here because we want to see it executed and covered.
