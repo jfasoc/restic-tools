@@ -1,19 +1,23 @@
 import os
-import subprocess
 import random
-import pytest
-import sys
 import re
+import subprocess
 from unittest.mock import patch
+
+import pytest
+
 from restic_subset_calculator import main
+
 
 def generate_seeded_file(path, size, seed):
     rng = random.Random(seed)
     with open(path, "wb") as f:
         f.write(rng.randbytes(size))
 
+
 def run_command(cmd, env=None):
     return subprocess.run(cmd, capture_output=True, check=True, env=env, text=True)
+
 
 @pytest.fixture
 def restic_repo(tmp_path):
@@ -31,6 +35,7 @@ def restic_repo(tmp_path):
 
     run_command(["restic", "init"], env=env)
     return env, tmp_path
+
 
 def test_integration_workflow(restic_repo, capsys):
     env, tmp_path = restic_repo
@@ -61,7 +66,9 @@ def test_integration_workflow(restic_repo, capsys):
     for round_num in range(4, 11):
         for i in range(20):
             size = 1024 + (i * 5)
-            generate_seeded_file(src / f"file_{round_num}_{i}.bin", size, seed + round_num * 100 + i)
+            generate_seeded_file(
+                src / f"file_{round_num}_{i}.bin", size, seed + round_num * 100 + i
+            )
         run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
 
     # Run calculator without debug
@@ -114,6 +121,8 @@ def test_integration_workflow(restic_repo, capsys):
     captured_debug = capsys.readouterr()
     assert "Executing: restic list index --json" in captured_debug.err
 
-    download_matches = re.findall(r"Total downloaded so far: ([\d\.]+) MB", captured_debug.err)
+    download_matches = re.findall(
+        r"Total downloaded so far: ([\d\.]+) MB", captured_debug.err
+    )
     assert len(download_matches) > 0
     assert float(download_matches[-1]) > 0
