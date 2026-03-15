@@ -41,25 +41,30 @@ def test_integration_workflow(restic_repo, capsys):
 
     # Round 1: 50 files
     for i in range(50):
-        size = 1024 + (i * 10)  # 1024 to 1514 bytes
+        size = 1024 + (i * 10)
         generate_seeded_file(src / f"file_1_{i}.bin", size, seed + i)
     run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
 
     # Round 2: 40 files
     for i in range(40):
-        size = 1024 + (i * 15)  # 1024 to 1609 bytes
+        size = 1024 + (i * 15)
         generate_seeded_file(src / f"file_2_{i}.bin", size, seed + 100 + i)
     run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
 
     # Round 3: 30 files
     for i in range(30):
-        size = 1024 + (i * 20)  # 1024 to 1604 bytes
+        size = 1024 + (i * 20)
         generate_seeded_file(src / f"file_3_{i}.bin", size, seed + 200 + i)
     run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
 
+    # Rounds 4-10: 20 files each
+    for round_num in range(4, 11):
+        for i in range(20):
+            size = 1024 + (i * 5)
+            generate_seeded_file(src / f"file_{round_num}_{i}.bin", size, seed + round_num * 100 + i)
+        run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
+
     # Run calculator without debug
-    # We use main() which prints to stdout.
-    # Since it processes index files one by one, it might print the table multiple times.
     with patch("sys.argv", ["restic_subset_calculator.py", "7"]):
         with patch.dict("os.environ", env):
             main()
@@ -75,7 +80,6 @@ def test_integration_workflow(restic_repo, capsys):
     # Extract numbers from the LAST output table
     lines = output.splitlines()
     subset_lines = []
-    # Work backwards to find the last table
     for line in reversed(lines):
         if re.match(r"^\s*\d+/7", line):
             subset_lines.append(line)
@@ -83,7 +87,7 @@ def test_integration_workflow(restic_repo, capsys):
             break
 
     assert len(subset_lines) == 7
-    subset_lines.reverse() # Back to 1/7 to 7/7
+    subset_lines.reverse()
 
     total_packs = 0
     total_size_mb = 0.0
@@ -94,17 +98,13 @@ def test_integration_workflow(restic_repo, capsys):
         total_packs += packs
         total_size_mb += size_mb
 
-    # Verify we have some packs and some size
     assert total_packs > 0
     assert total_size_mb > 0
 
-    # Since we have seeded data, these values should be deterministic
-    # Let's check the exact values for this specific restic version (0.16.4) and data
-    # Note: Restic might create different number of packs depending on version,
-    # but with 120 small files, it should be at least a few packs.
-    # On this environment it seems to be 6 packs.
-    assert total_packs == 6
-    assert 0.16 <= total_size_mb <= 0.18
+    # Verified values for 10 rounds on this environment (restic 0.16.4)
+    assert total_packs == 20
+    # Values observed: 0.39, 0.40, 0.41... it depends on rounding and floating point
+    assert 0.38 <= total_size_mb <= 0.42
 
     # Run calculator with debug to verify download size reporting
     with patch("sys.argv", ["restic_subset_calculator.py", "7", "--debug"]):
@@ -114,7 +114,6 @@ def test_integration_workflow(restic_repo, capsys):
     captured_debug = capsys.readouterr()
     assert "Executing: restic list index --json" in captured_debug.err
 
-    # Verify "Total downloaded so far" is present and reports a non-zero size
     download_matches = re.findall(r"Total downloaded so far: ([\d\.]+) MB", captured_debug.err)
     assert len(download_matches) > 0
     assert float(download_matches[-1]) > 0
