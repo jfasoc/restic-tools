@@ -19,7 +19,7 @@ distribution = true
 [tool.pdm.version]
 source = "scm"
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=9.0.2",
     "pytest-mock>=3.15.1",
