@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+CLI tool to calculate restic check data subset statistics.
+"""
+
 import argparse
 import json
 import os
@@ -7,6 +11,15 @@ import sys
 
 
 def run_restic(args, debug=False):
+    """Executes a restic command and returns the output and its size.
+
+    Args:
+        args (list): List of command-line arguments for restic.
+        debug (bool): If True, prints the executed command and download size.
+
+    Returns:
+        tuple: A tuple containing the stdout bytes and the length of the stdout.
+    """
     cmd = ["restic"] + args
     if debug:
         print(f"Executing: {' '.join(cmd)}", file=sys.stderr)
@@ -18,16 +31,18 @@ def run_restic(args, debug=False):
             print(f"Downloaded: {size_mb:.2f} MB", file=sys.stderr)
         return result.stdout, len(result.stdout)
     except subprocess.CalledProcessError as e:
-        print(f"Error executing restic: {e.stderr}", file=sys.stderr)
+        print(f"Error executing restic: {e.stderr.decode()}", file=sys.stderr)
         sys.exit(1)
 
 
 def parse_json_output(output):
-    """
-    Parse restic JSON output which might be:
-    - A single JSON object/array
-    - Multiple JSON objects (NDJSON)
-    - A list of JSON-encoded strings (one per line)
+    """Parses restic JSON output which might be NDJSON or raw IDs.
+
+    Args:
+        output (str): The raw output string from restic.
+
+    Returns:
+        list|dict: Parsed JSON data, either as a list or a dictionary.
     """
     output = output.strip()
     if not output:
@@ -50,6 +65,14 @@ def parse_json_output(output):
 
 
 def print_table(t, subset_stats, current_index, total_indices):
+    """Prints a formatted table of subset statistics.
+
+    Args:
+        t (int): Total number of subsets.
+        subset_stats (dict): Dictionary containing pack counts and sizes per subset.
+        current_index (int): The current index being processed.
+        total_indices (int): The total number of indices to process.
+    """
     print(f"\nIndex {current_index}/{total_indices}")
     header = f"{'Subset (n/t)':<15} {'Packs':<15} {'Size (MB)':<15}"
     print(header)
@@ -64,7 +87,12 @@ def print_table(t, subset_stats, current_index, total_indices):
         print(f"{n_t:<15} {packs:>15} {size_mb:>15.2f}")
 
 
-def main():
+def get_parser():
+    """Creates the argument parser for the CLI.
+
+    Returns:
+        argparse.ArgumentParser: The configured argument parser.
+    """
     parser = argparse.ArgumentParser(
         description="Calculate restic check --read-data-subset stats."
     )
@@ -72,8 +100,15 @@ def main():
     parser.add_argument(
         "--debug", action="store_true", help="Print restic commands executed"
     )
-    args = parser.parse_args()
+    return parser
 
+
+def run(args):
+    """Orchestrates the subset calculation process.
+
+    Args:
+        args (argparse.Namespace): The parsed command-line arguments.
+    """
     if not (1 <= args.t <= 256):
         print("Error: t must be between 1 and 256.", file=sys.stderr)
         sys.exit(1)
@@ -130,6 +165,11 @@ def main():
                 f"Total downloaded so far: {total_downloaded / 1_000_000:.2f} MB",
                 file=sys.stderr,
             )
+
+
+def main():
+    """Main entry point for the CLI."""
+    run(get_parser().parse_args())
 
 
 if __name__ == "__main__":
