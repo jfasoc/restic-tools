@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from restic_subset_calculator import main
+from restic_subset_calculator.cli import main
 
 
 def generate_seeded_file(path, size, seed):
@@ -72,7 +72,7 @@ def test_integration_workflow(restic_repo, capsys):
         run_command(["restic", "backup", str(src), "--compression", "off"], env=env)
 
     # Run calculator without debug
-    with patch("sys.argv", ["restic_subset_calculator.py", "7"]):
+    with patch("sys.argv", ["restic_subset_calculator", "7"]):
         with patch.dict("os.environ", env):
             main()
 
@@ -114,7 +114,7 @@ def test_integration_workflow(restic_repo, capsys):
     assert 0.38 <= total_size_mb <= 0.42
 
     # Run calculator with debug to verify download size reporting
-    with patch("sys.argv", ["restic_subset_calculator.py", "7", "--debug"]):
+    with patch("sys.argv", ["restic_subset_calculator", "7", "--debug"]):
         with patch.dict("os.environ", env):
             main()
 

@@ -1,6 +1,6 @@
 [project]
 name = "restic-subset-calculator"
-version = "0.1.0"
+dynamic = ["version"]
 description = "A tool to calculate restic check data subset statistics"
 authors = [
     {name = "jfasoc", email = "7720125+jfasoc@users.noreply.github.com"},
@@ -11,16 +11,35 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-restic-subset-calculator = "restic_subset_calculator:main"
+restic-subset-calculator = "restic_subset_calculator.cli:main"
 
 [tool.pdm]
 distribution = true
 
+[tool.pdm.version]
+source = "scm"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "pytest-cov>=7.0.0",
+    "pytest-bdd",
+    "pytest-gremlins",
+    "pytest-xdist",
+    "ruff>=0.15.6",
+    "argcomplete",
+    "shtab",
+    "commitizen",
+    "pre-commit",
+]
+
 [tool.pytest.ini_options]
+addopts = "--cov=restic_subset_calculator --cov-report=term-missing --cov-fail-under=100"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["."]
+source = ["src/restic_subset_calculator"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
@@ -34,10 +53,14 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
-[dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-mock>=3.15.1",
-    "pytest-cov>=7.0.0",
-    "ruff>=0.15.6",
-]
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "scm"
+tag_format = "v$version"
+update_changelog_on_bump = true
+annotated_tag = true
+bump_message = "chore(release): $new_version [skip ci]"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

@@ -1,0 +1,1 @@
+- Add shell completions generation script.
