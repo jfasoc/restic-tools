@@ -24,13 +24,18 @@ Welcome, Agent. This repository contains a collection of restic helper tools. Pl
 * **Mandatory CI Verification:** Before pushing any code, you MUST run all tools and checks that are part of the GitHub Actions workflow (e.g., `ruff check .` and `pytest`).
 * A failure in the GitHub Actions workflow is **unacceptable**. You are responsible for ensuring all CI checks pass locally in the sandbox before submission.
 
-## 4. Metadata and Identification
+## 4. Subsetting Algorithm
+The tool must strictly follow restic's `n/t` subsetting logic:
+- Extracts the first byte of the pack ID (first two hex characters).
+- Subset `n` (1-based) is assigned if `first_byte % t == n - 1`.
+
+## 5. Metadata and Identification
 * Use the following metadata for project configuration:
     * **Project Name:** restic-tools
     * **Author Name:** jfasoc
     * **Email:** 7720125+jfasoc@users.noreply.github.com
 
-## 5. Tool Implementation Best Practices
+## 6. Tool Implementation Best Practices
 * Helper tools should be located in `src/restic_tools/` and registered as scripts in `pyproject.toml`.
 * **Commit Message Validation:** All commits must follow the conventional commits format. To enforce this locally, ensure you install the commit-msg hook:
     ```bash
@@ -46,7 +51,7 @@ Welcome, Agent. This repository contains a collection of restic helper tools. Pl
 * **Verification over Feedback:** Prioritize the actual source code as the ground truth. If a code review or external feedback contradicts the existing code (e.g., claiming a feature is "unimplemented" when it is clearly present), you must verify the code before taking action.
 * **Update Completion Files:** Whenever CLI parameters are added, removed, or modified, you SHOULD regenerate the shell completion scripts (once implemented).
 
-## 6. Documentation
+## 7. Documentation
 * All Python source code must be thoroughly documented using **Google-style docstrings**.
 * Every module, class, and function (except for simple internal helpers if they are truly self-explanatory) must have a docstring.
 * Docstrings should include a summary, arguments (if any), and return values (if any).
