@@ -216,9 +216,15 @@ def test_parse_json_output_empty():
 
 def test_parse_json_output_ndjson():
     ndjson = '{"a":1}\n{"b":2}'
-    assert restic_tools.subset_calculator.parse_json_output(ndjson) == [{"a": 1}, {"b": 2}]
+    assert restic_tools.subset_calculator.parse_json_output(ndjson) == [
+        {"a": 1},
+        {"b": 2},
+    ]
 
 
 def test_parse_json_output_mixed_with_empty_lines():
     ndjson = '{"a":1}\n\n  \n{"b":2}'
-    assert restic_tools.subset_calculator.parse_json_output(ndjson) == [{"a": 1}, {"b": 2}]
+    assert restic_tools.subset_calculator.parse_json_output(ndjson) == [
+        {"a": 1},
+        {"b": 2},
+    ]
