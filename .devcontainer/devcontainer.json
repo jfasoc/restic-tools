@@ -1,5 +1,5 @@
 {
-	"name": "restic-subset-calculator",
+	"name": "restic-tools",
 	"image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
 	"features": {
 		"ghcr.io/devcontainers/features/common-utils:2": {

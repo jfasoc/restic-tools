@@ -1,6 +1,6 @@
-# Agent Guidelines for restic-subset-calculator Repository
+# Agent Guidelines for restic-tools Repository
 
-Welcome, Agent. This repository contains a tool to calculate restic check data subset statistics. Please adhere to the following guidelines when working here:
+Welcome, Agent. This repository contains a collection of restic helper tools. Please adhere to the following guidelines when working here:
 
 ## 1. Deep Planning and Requirement Gathering
 * Before starting any task, enter a deep planning mode.
@@ -26,12 +26,12 @@ Welcome, Agent. This repository contains a tool to calculate restic check data s
 
 ## 4. Metadata and Identification
 * Use the following metadata for project configuration:
-    * **Project Name:** restic-subset-calculator
+    * **Project Name:** restic-tools
     * **Author Name:** jfasoc
     * **Email:** 7720125+jfasoc@users.noreply.github.com
 
 ## 5. Tool Implementation Best Practices
-* Helper tools should be located in `src/restic_subset_calculator/` and registered as scripts in `pyproject.toml`.
+* Helper tools should be located in `src/restic_tools/` and registered as scripts in `pyproject.toml`.
 * **Commit Message Validation:** All commits must follow the conventional commits format. To enforce this locally, ensure you install the commit-msg hook:
     ```bash
     pre-commit install --hook-type commit-msg

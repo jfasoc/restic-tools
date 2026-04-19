@@ -1,7 +1,7 @@
 [project]
-name = "restic-subset-calculator"
+name = "restic-tools"
 dynamic = ["version"]
-description = "A tool to calculate restic check data subset statistics"
+description = "A collection of restic helper tools"
 authors = [
     {name = "jfasoc", email = "7720125+jfasoc@users.noreply.github.com"},
 ]
@@ -11,7 +11,7 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-restic-subset-calculator = "restic_subset_calculator.cli:main"
+restic-subset-calculator = "restic_tools.subset_calculator:main"
 
 [tool.pdm]
 distribution = true
@@ -35,11 +35,11 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=restic_subset_calculator --cov-report=term-missing --cov-fail-under=100"
+addopts = "--cov=restic_tools --cov-report=term-missing --cov-fail-under=100"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["src/restic_subset_calculator"]
+source = ["src/restic_tools"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
